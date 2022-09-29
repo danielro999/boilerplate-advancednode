@@ -31,7 +31,7 @@ myDB(async client => {
   const myDataBase = await client.db('database').collection('users');
 
   app.route('/').get((req, res) => {
-    res.render(process.cwd() + '/views/pug', { title: 'Connected to Database', message: 'Please login' });
+    res.render(process.cwd() + '/views/pug', { title: 'Connected to Database', message: 'Please login', showLogin: true });
   });
   
   passport.serializeUser((user, done) => {
@@ -43,6 +43,19 @@ myDB(async client => {
       done(null, doc);
     });
   });
+
+  passport.use(new LocalStrategy(function(username, password, done) {
+    
+    myDataBase.findOne({ username: username }, function (err, user) {
+      console.log('User '+ username +' attempted to log in.');
+      if (err) { return done(err); }
+      if (!user) { return done(null, false); }
+      if (password !== user.password) { return done(null, false); }
+      return done(null, user);
+    });
+    
+  }
+));
   
 }).catch(e => {
   app.route('/').get((req, res) => {

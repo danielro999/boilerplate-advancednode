@@ -10,6 +10,7 @@ const app = express();
 app.set('view engine', 'pug');
 const ObjectID = require('mongodb').ObjectID;
 const LocalStrategy = require('passport-local');
+const bcrypt = require('bcrypt');
 
 fccTesting(app); //For FCC testing purposes
 app.use('/public', express.static(process.cwd() + '/public'));
@@ -60,18 +61,18 @@ myDB(async client => {
   });
 
   app.route('/register').post((req, res, next) => {
+    const hash = bcrypt.hashSync(req.body.password, 12);
     myDataBase.findOne({ username: req.body.username }, function(err, user) {
       if (err) {
         next(err);
       } else if (user) {
         res.redirect('/');
       } else {
-        myDataBase.insertOne({ username: req.body.username, password: req.body.password }, (err, doc) => {
+        myDataBase.insertOne({ username: req.body.username, password: hash }, (err, doc) => {
             if (err) {
               res.redirect('/');
             } else {
-              // The inserted document is held within
-              // the ops property of the doc
+              // The inserted document is held within the ops property of the doc
               next(null, doc.ops[0]);
             }
           }
@@ -96,7 +97,7 @@ myDB(async client => {
       console.log('User '+ username +' attempted to log in.');
       if (err) { return done(err); }
       if (!user) { return done(null, false); }
-      if (password !== user.password) { return done(null, false); }
+      if (!bcrypt.compareSync(password, user.password)) { return done(null, false); }
       return done(null, user);
     });
    }

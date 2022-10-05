@@ -28,8 +28,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
 myDB(async client => {
   const myDataBase = await client.db('database').collection('users');
 
@@ -38,9 +36,17 @@ myDB(async client => {
   
   let currentUsers = 0;
   io.on('connection', socket => { 
-    console.log('A user has connected', 
     ++currentUsers;
-    io.emit('user count', currentUsers););
+    io.emit('user count', currentUsers);
+    console.log('A user has connected');
+    console.log('cantidad de usuarios' + currentUsers);
+    
+    socket.on('disconnect', () => 
+      {
+        --currentUsers;
+        console.log('usuario desconectado');
+        console.log('cantidad de usuarios' + currentUsers)
+      });
   });
 
 }).catch(e => {
